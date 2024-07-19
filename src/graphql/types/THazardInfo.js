@@ -1,4 +1,4 @@
-const { getHazardInfoByEvent } = require("../../util/jobs/cacheRegionData");
+const { getHazardInfoByEvent } = require("../../util/hazardInfoUtil");
 
 async function THazardInfo(event) {
   // Build return object
