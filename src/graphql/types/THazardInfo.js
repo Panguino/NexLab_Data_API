@@ -1,5 +1,4 @@
-const { getHazardInfoByEvent } = require("../../util/hazardInfoUtil");
-
+const getHazardInfoByEvent = require("../../util/hazardInfoUtil");
 async function THazardInfo(event) {
   // Build return object
   const hazardInfoData = await getHazardInfoByEvent(event);
