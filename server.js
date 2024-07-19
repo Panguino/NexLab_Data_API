@@ -14,7 +14,9 @@
     require('dotenv').config()
 
     // Setup Cache
-    const cache = new NodeCache()
+    const cache = new NodeCache({
+        useClones: false
+    })
 
     // Schema + Resolvers
     const resolvers = require('./src/graphql/resolvers')
