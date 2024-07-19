@@ -114,7 +114,7 @@ const HAZARD_COLORS = {
   },
 };
 
-export const getHazardInfoByEvent = async (alertName) => {
+const getHazardInfoByEvent = async (alertName) => {
   const alertclass = {
     /* CONVECTIVE */
     "Tornado Warning": {
@@ -656,3 +656,5 @@ export const getHazardInfoByEvent = async (alertName) => {
 function rgbToHex(r, g, b) {
   return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
+
+module.exports = getHazardInfoByEvent;
