@@ -632,7 +632,7 @@ const getHazardInfoByEvent = async (alertName) => {
     // Hydrologic Outlook - fcst - likely to be filtered out
   };
 
-  if (alertclass[alertName]) {
+  if (!alertclass[alertName]) {
     console.log(`Unknown Alert: ${alertName}`);
     return {};
   } else {
