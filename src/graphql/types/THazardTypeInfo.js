@@ -1,4 +1,4 @@
-async function THazardTypeInfo({ type, type_name }) {
+async function THazardTypeInfo({ type, type_name }, fields) {
   // Build return object
   const hazardType = {
     name: await (async () => {

@@ -1,4 +1,4 @@
-async function THazardLevelInfo({ level, level_name }) {
+async function THazardLevelInfo({ level, level_name }, fields) {
   // Build return object
   const hazardLevel = {
     name: await (async () => {

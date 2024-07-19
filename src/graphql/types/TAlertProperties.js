@@ -203,7 +203,7 @@ async function TAlertProperties(alertProperties, fields) {
     hazardInfo: await (async () => {
       if ("hazardInfo" in fields) {
         const THazardInfo = require("./THazardInfo");
-        return await THazardInfo(alertProperties.event);
+        return await THazardInfo(alertProperties.event, fields.hazardInfo);
       } else {
         return null;
       }

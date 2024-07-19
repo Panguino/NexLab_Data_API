@@ -1,4 +1,4 @@
-async function THazardColor({ color_rgb, color_hex }) {
+async function THazardColor({ color_rgb, color_hex }, fields) {
   // Build return object
   const R = Number(color_rgb.split(",")[0]);
   const G = Number(color_rgb.split(",")[1]);

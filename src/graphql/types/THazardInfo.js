@@ -1,12 +1,12 @@
 const getHazardInfoByEvent = require("../../util/hazardInfoUtil");
-async function THazardInfo(event) {
+async function THazardInfo(event, fields) {
   // Build return object
   const hazardInfoData = await getHazardInfoByEvent(event);
   const hazardInfo = {
     type: await (async () => {
       if ("type" in fields) {
         const THazardTypeInfo = require("./THazardTypeInfo");
-        return await THazardTypeInfo(hazardInfoData);
+        return await THazardTypeInfo(hazardInfoData, fields.type);
       } else {
         return null;
       }
@@ -14,7 +14,7 @@ async function THazardInfo(event) {
     level: await (async () => {
       if ("level" in fields) {
         const THazardLevelInfo = require("./THazardLevelInfo");
-        return await THazardLevelInfo(hazardInfoData);
+        return await THazardLevelInfo(hazardInfoData, fields.level);
       } else {
         return null;
       }
@@ -23,7 +23,7 @@ async function THazardInfo(event) {
       if ("color" in fields) {
         const THazardColor = require("./THazardColor");
         color = "255,0,0";
-        return await THazardColor(hazardInfoData);
+        return await THazardColor(hazardInfoData, fields.color);
       } else {
         return null;
       }
