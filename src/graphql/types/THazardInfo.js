@@ -22,7 +22,6 @@ async function THazardInfo(event, fields) {
     color: await (async () => {
       if ("color" in fields) {
         const THazardColor = require("./THazardColor");
-        color = "255,0,0";
         return await THazardColor(hazardInfoData, fields.color);
       } else {
         return null;
