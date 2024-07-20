@@ -616,6 +616,10 @@ const getHazardInfoByEvent = async (alertName) => {
       level: HAZARD_LEVEL_ADVISORY_ID,
       type: HAZARD_TYPE_NONMET_ID,
     },
+    "Blue Alert": {
+      level: HAZARD_LEVEL_STATEMENT_ID,
+      type: HAZARD_TYPE_NONMET_ID,
+    },
 
     /* SPECIAL CASES */
     "Special Weather Statement": {
