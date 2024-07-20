@@ -9,7 +9,7 @@ async function TAlertProperties(alertProperties, fields) {
       }
     })(),
     atType: await (async () => {
-      if ("atId" in fields) {
+      if ("atType" in fields) {
         return alertProperties["@Type"];
       } else {
         return null;
