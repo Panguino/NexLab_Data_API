@@ -2,7 +2,7 @@ async function TCountyProperties(countyProperties, fields) {
   // Build return object
   const countyPropertiesInfo = {
     ID: await (async () => {
-      if ("FIPS" in fields) {
+      if ("ID" in fields) {
         return countyProperties.FIPS;
       } else {
         return null;

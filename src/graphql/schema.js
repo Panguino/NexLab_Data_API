@@ -166,7 +166,7 @@ const schema = gql`
     instruction: String
     response: String
     parameters: ParameterObject
-    hazard_info: HazardInfo
+    hazardInfo: HazardInfo
   }
 
   type HazardInfo {
