@@ -102,6 +102,8 @@
         extended: true
     }))
 
+    console.log((process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB')
+
     // Initially cache region data
     const cacheRegionDataResult = await cacheRegionData(cache)
     if (!cacheRegionDataResult.success){
@@ -113,9 +115,10 @@
     server.start()
     server.applyMiddleware({ app })
 
-    httpServer.listen({ port: process.env.PORT }, () =>
+    httpServer.listen({ port: process.env.PORT }, () => {
         console.log(`Server ready at ${process.env.SITE_URL}:${process.env.PORT}${server.graphqlPath}`)
-    )
+        console.log('RAM Usage: ' + (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB')
+    })
 
     // Setup scheduling
     schedule.setup(cache)

@@ -479,6 +479,10 @@ async function cacheRegionData(cache) {
 
   // Assign states to regions
   for (let state of stateData.features) {
+    if (state.properties.STATE in getRegionByState(state.properties.STATE).states){
+        console.log(`Duplicate state found: ${state.properties.STATE}`)
+        continue
+    }
     getRegionByState(state.properties.STATE).states[state.properties.STATE] = {
       ...state,
       counties: {},
