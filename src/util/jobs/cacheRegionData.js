@@ -617,9 +617,8 @@ async function cacheRegionData(cache) {
             continue;
           }
           for (let currentSAMECode of currentHazard.properties.geocode.SAME) {
-            const intSAMECode = parseInt(currentSAMECode);
-            const strSAMECode = intSAMECode.toString();
-            if (currentCounty.properties.FIPS === strSAMECode) {
+            const sliceSAMECode = currentSAMECode.slice(1);
+            if (currentCounty.properties.FIPS === sliceSAMECode) {
               currentCounty.alerts[currentHazard.id] = currentHazard;
             }
           }
