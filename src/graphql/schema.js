@@ -95,7 +95,7 @@ const schema = gql`
     LON: Float
     LAT: Float
     Location: String
-    Name: String
+    NAME: String
   }
 
   type State {
