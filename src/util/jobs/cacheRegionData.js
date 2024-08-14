@@ -264,6 +264,7 @@ async function cacheRegionData(cache) {
         targetRegion = REGIONS["HAWAII"];
         break;
       case "PR":
+      case "VI":
         targetRegion = REGIONS["PUERTO_RICO"];
         break;
       case "GU":
