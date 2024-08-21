@@ -60,40 +60,40 @@ async function TAlertProperties(alertProperties, fields) {
     })(),
     sent: await (async () => {
       if ("sent" in fields) {
-        //const date = new Date(alertProperties.sent);
-        return alertProperties.sent;
+        const date = new Date(alertProperties.sent);
+        return alertProperties.sent ? date.toISOString() : null;
       } else {
         return null;
       }
     })(),
     effective: await (async () => {
       if ("effective" in fields) {
-        //const date = new Date(alertProperties.effective);
-        return alertProperties.effective;
+        const date = new Date(alertProperties.effective);
+        return alertProperties.effective ? date.toISOString() : null;
       } else {
         return null;
       }
     })(),
     onset: await (async () => {
       if ("onset" in fields) {
-        //const date = new Date(alertProperties.onset);
-        return alertProperties.onset;
+        const date = new Date(alertProperties.onset);
+        return alertProperties.onset ? date.toISOString() : null;
       } else {
         return null;
       }
     })(),
     expires: await (async () => {
       if ("expires" in fields) {
-        //const date = new Date(alertProperties.expires);
-        return alertProperties.expires;
+        const date = new Date(alertProperties.expires);
+        return alertProperties.expires ? date.toISOString() : null;
       } else {
         return null;
       }
     })(),
     ends: await (async () => {
       if ("ends" in fields) {
-        //const date = new Date(alertProperties.ends);
-        return alertProperties.ends;
+        const date = new Date(alertProperties.ends);
+        return alertProperties.ends ? date.toISOString() : null;
       } else {
         return null;
       }

@@ -147,11 +147,11 @@ const schema = gql`
     geocode: GeoCode
     affectedZones: [String]
     references: [Reference]
-    sent: String
-    effective: String
-    onset: String
-    expires: String
-    ends: String
+    sent: Date
+    effective: Date
+    onset: Date
+    expires: Date
+    ends: Date
     status: String
     messageType: String
     category: String
