@@ -97,12 +97,15 @@ async function archiveAlertsToS3Optimized(cache) {
 }
 
 /**
- * Extract all alerts from region data into a flat structure
+ * Extract all alerts from region data into a normalized database structure
+ * Separates locations, alerts, and their mappings to minimize duplication
  * @param {Object} regionData - Cached region data
- * @returns {Object} Map of alertId -> alert with location info
+ * @returns {Object} { locations: {}, alerts: {}, alertLocationMap: {} }
  */
 function extractAllAlerts(regionData) {
-  const alerts = {};
+  const locations = {}; // locationId -> location data
+  const alerts = {}; // alertId -> alert data (without locations)
+  const alertLocationMap = {}; // alertId -> [locationIds]
 
   for (const [regionName, region] of Object.entries(regionData)) {
     // Extract from counties
@@ -110,29 +113,50 @@ function extractAllAlerts(regionData) {
       for (const [stateName, state] of Object.entries(region.states)) {
         if (state.counties) {
           for (const [countyFIPS, county] of Object.entries(state.counties)) {
+            // Store location once
+            const locationId = `county-${county.properties.FIPS}`;
+            if (!locations[locationId]) {
+              locations[locationId] = {
+                id: locationId,
+                locationId: county.properties.FIPS,
+                name: county.properties.COUNTYNAME,
+                type: 'county',
+                state: state.properties.STATE,
+                lat: county.properties.LAT,
+                lon: county.properties.LON,
+              };
+            }
+
             if (county.alerts) {
               for (const [alertId, alert] of Object.entries(county.alerts)) {
-                alerts[alert.id] = {
-                  id: alert.id,
-                  event: alert.properties.event,
-                  locationId: county.properties.FIPS,
-                  locationName: county.properties.COUNTYNAME,
-                  locationType: 'county',
-                  state: state.properties.STATE,
-                  lat: county.properties.LAT,
-                  lon: county.properties.LON,
-                  sent: alert.properties.sent,
-                  effective: alert.properties.effective,
-                  onset: alert.properties.onset,
-                  expires: alert.properties.expires,
-                  ends: alert.properties.ends,
-                  headline: alert.properties.headline,
-                  description: alert.properties.description,
-                  areaDesc: alert.properties.areaDesc,
-                  severity: alert.properties.severity,
-                  certainty: alert.properties.certainty,
-                  urgency: alert.properties.urgency,
-                };
+                const alertBaseId = alert.id;
+
+                // Store alert once
+                if (!alerts[alertBaseId]) {
+                  alerts[alertBaseId] = {
+                    id: alert.id,
+                    event: alert.properties.event,
+                    sent: alert.properties.sent,
+                    effective: alert.properties.effective,
+                    onset: alert.properties.onset,
+                    expires: alert.properties.expires,
+                    ends: alert.properties.ends,
+                    headline: alert.properties.headline,
+                    description: alert.properties.description,
+                    areaDesc: alert.properties.areaDesc,
+                    severity: alert.properties.severity,
+                    certainty: alert.properties.certainty,
+                    urgency: alert.properties.urgency,
+                  };
+                }
+
+                // Map alert to location
+                if (!alertLocationMap[alertBaseId]) {
+                  alertLocationMap[alertBaseId] = [];
+                }
+                if (!alertLocationMap[alertBaseId].includes(locationId)) {
+                  alertLocationMap[alertBaseId].push(locationId);
+                }
               }
             }
           }
@@ -143,28 +167,47 @@ function extractAllAlerts(regionData) {
     // Extract from coasts
     if (region.coasts) {
       for (const [coastId, coast] of Object.entries(region.coasts)) {
+        // Store location once
+        const locationId = `coast-${coast.properties.ID}`;
+        if (!locations[locationId]) {
+          locations[locationId] = {
+            id: locationId,
+            locationId: coast.properties.ID,
+            name: coast.properties.NAME,
+            type: 'coast',
+            lat: coast.properties.LAT,
+            lon: coast.properties.LON,
+          };
+        }
+
         if (coast.alerts) {
           for (const [alertId, alert] of Object.entries(coast.alerts)) {
-            alerts[alert.id] = {
-              id: alert.id,
-              event: alert.properties.event,
-              locationId: coast.properties.ID,
-              locationName: coast.properties.NAME,
-              locationType: 'coast',
-              lat: coast.properties.LAT,
-              lon: coast.properties.LON,
-              sent: alert.properties.sent,
-              effective: alert.properties.effective,
-              onset: alert.properties.onset,
-              expires: alert.properties.expires,
-              ends: alert.properties.ends,
-              headline: alert.properties.headline,
-              description: alert.properties.description,
-              areaDesc: alert.properties.areaDesc,
-              severity: alert.properties.severity,
-              certainty: alert.properties.certainty,
-              urgency: alert.properties.urgency,
-            };
+            const alertBaseId = alert.id;
+
+            if (!alerts[alertBaseId]) {
+              alerts[alertBaseId] = {
+                id: alert.id,
+                event: alert.properties.event,
+                sent: alert.properties.sent,
+                effective: alert.properties.effective,
+                onset: alert.properties.onset,
+                expires: alert.properties.expires,
+                ends: alert.properties.ends,
+                headline: alert.properties.headline,
+                description: alert.properties.description,
+                areaDesc: alert.properties.areaDesc,
+                severity: alert.properties.severity,
+                certainty: alert.properties.certainty,
+                urgency: alert.properties.urgency,
+              };
+            }
+
+            if (!alertLocationMap[alertBaseId]) {
+              alertLocationMap[alertBaseId] = [];
+            }
+            if (!alertLocationMap[alertBaseId].includes(locationId)) {
+              alertLocationMap[alertBaseId].push(locationId);
+            }
           }
         }
       }
@@ -173,55 +216,79 @@ function extractAllAlerts(regionData) {
     // Extract from offshores
     if (region.offshores) {
       for (const [offshoreId, offshore] of Object.entries(region.offshores)) {
+        // Store location once
+        const locationId = `offshore-${offshore.properties.ID}`;
+        if (!locations[locationId]) {
+          locations[locationId] = {
+            id: locationId,
+            locationId: offshore.properties.ID,
+            name: offshore.properties.Name,
+            type: 'offshore',
+            lat: offshore.properties.LAT,
+            lon: offshore.properties.LON,
+          };
+        }
+
         if (offshore.alerts) {
           for (const [alertId, alert] of Object.entries(offshore.alerts)) {
-            alerts[alert.id] = {
-              id: alert.id,
-              event: alert.properties.event,
-              locationId: offshore.properties.ID,
-              locationName: offshore.properties.Name,
-              locationType: 'offshore',
-              lat: offshore.properties.LAT,
-              lon: offshore.properties.LON,
-              sent: alert.properties.sent,
-              effective: alert.properties.effective,
-              onset: alert.properties.onset,
-              expires: alert.properties.expires,
-              ends: alert.properties.ends,
-              headline: alert.properties.headline,
-              description: alert.properties.description,
-              areaDesc: alert.properties.areaDesc,
-              severity: alert.properties.severity,
-              certainty: alert.properties.certainty,
-              urgency: alert.properties.urgency,
-            };
+            const alertBaseId = alert.id;
+
+            if (!alerts[alertBaseId]) {
+              alerts[alertBaseId] = {
+                id: alert.id,
+                event: alert.properties.event,
+                sent: alert.properties.sent,
+                effective: alert.properties.effective,
+                onset: alert.properties.onset,
+                expires: alert.properties.expires,
+                ends: alert.properties.ends,
+                headline: alert.properties.headline,
+                description: alert.properties.description,
+                areaDesc: alert.properties.areaDesc,
+                severity: alert.properties.severity,
+                certainty: alert.properties.certainty,
+                urgency: alert.properties.urgency,
+              };
+            }
+
+            if (!alertLocationMap[alertBaseId]) {
+              alertLocationMap[alertBaseId] = [];
+            }
+            if (!alertLocationMap[alertBaseId].includes(locationId)) {
+              alertLocationMap[alertBaseId].push(locationId);
+            }
           }
         }
       }
     }
   }
 
-  return alerts;
+  return {
+    locations,
+    alerts,
+    alertLocationMap,
+  };
 }
 
 /**
  * Create optimized snapshot by comparing with previous snapshot
- * Stores full data for all alerts in alert_data section
- * Stores status changes in alerts section for timeline tracking
- * @param {Object} currentAlerts - Current alerts map
- * @param {Object} previousAlerts - Previous alerts map
+ * Uses normalized database structure with separate locations, alerts, and mappings
+ * @param {Object} currentAlerts - Current alerts object { locations, alerts, alertLocationMap }
+ * @param {Object} previousAlerts - Previous alerts object
  * @returns {Object} Optimized snapshot
  */
 function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   const snapshot = {
     timestamp: new Date().toISOString(),
     snapshot_id: uuidv4(),
-    alerts_count: Object.keys(currentAlerts).length,
+    alerts_count: Object.keys(currentAlerts.alerts).length,
     new_count: 0,
     unchanged_count: 0,
     expired_count: 0,
-    // Store full alert data for all current alerts
-    alert_data: {},
+    // Normalized database structure
+    locations: currentAlerts.locations,
+    alert_data: currentAlerts.alerts,
+    alertLocationMap: currentAlerts.alertLocationMap,
     // Store status changes for timeline
     alerts: {},
   };
@@ -230,13 +297,10 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   const seenAlerts = new Set();
 
   // Process current alerts
-  for (const [alertId, alert] of Object.entries(currentAlerts)) {
+  for (const [alertId, alert] of Object.entries(currentAlerts.alerts)) {
     seenAlerts.add(alertId);
 
-    // Always store full alert data
-    snapshot.alert_data[alertId] = alert;
-
-    if (!previousAlerts || !previousAlerts[alertId]) {
+    if (!previousAlerts || !previousAlerts.alerts || !previousAlerts.alerts[alertId]) {
       // New alert
       snapshot.alerts[alertId] = {
         id: alertId,
@@ -245,7 +309,7 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
       snapshot.new_count++;
     } else {
       // Check if alert has changed
-      const prev = previousAlerts[alertId];
+      const prev = previousAlerts.alerts[alertId];
       const hasChanged = JSON.stringify(alert) !== JSON.stringify(prev);
 
       if (hasChanged) {
@@ -267,8 +331,8 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   }
 
   // Process expired alerts (were in previous but not in current)
-  if (previousAlerts) {
-    for (const [alertId, alert] of Object.entries(previousAlerts)) {
+  if (previousAlerts && previousAlerts.alerts) {
+    for (const [alertId, alert] of Object.entries(previousAlerts.alerts)) {
       if (!seenAlerts.has(alertId)) {
         snapshot.alerts[alertId] = {
           id: alertId,
