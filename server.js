@@ -1,16 +1,16 @@
 (async () => {
   // Third party
-  const express = require("express");
-  const { ApolloServer } = require("apollo-server-express");
-  const { execute, subscribe } = require("graphql");
-  const { SubscriptionServer } = require("subscriptions-transport-ws");
-  const { makeExecutableSchema } = require("@graphql-tools/schema");
-  const { createServer } = require("http");
-  const { PubSub } = require("graphql-subscriptions");
-  const cors = require("cors");
-  const depthLimit = require("graphql-depth-limit");
-  const NodeCache = require("node-cache");
-  require("dotenv").config();
+  const express = require('express');
+  const { ApolloServer } = require('apollo-server-express');
+  const { execute, subscribe } = require('graphql');
+  const { SubscriptionServer } = require('subscriptions-transport-ws');
+  const { makeExecutableSchema } = require('@graphql-tools/schema');
+  const { createServer } = require('http');
+  const { PubSub } = require('graphql-subscriptions');
+  const cors = require('cors');
+  const depthLimit = require('graphql-depth-limit');
+  const NodeCache = require('node-cache');
+  require('dotenv').config();
 
   // Setup Cache
   const cache = new NodeCache({
@@ -18,14 +18,18 @@
   });
 
   // Schema + Resolvers
-  const resolvers = require("./src/graphql/resolvers");
-  const schema = require("./src/graphql/schema");
+  const resolvers = require('./src/graphql/resolvers');
+  const schema = require('./src/graphql/schema');
 
   // Defaut async iterator
   const pubsub = new PubSub();
 
   // Cache Weather Function
-  const cacheRegionData = require("./src/util/jobs/cacheRegionData");
+  const cacheRegionData = require('./src/util/jobs/cacheRegionData');
+
+  // Hazards Routes
+  const hazardsRouter = require('./src/routes/hazards');
+  const alertHistoryRouter = require('./src/routes/alertHistory');
 
   // Create executable schema
   const execSchema = makeExecutableSchema({
@@ -43,24 +47,24 @@
       execute,
       subscribe,
       onConnect(connectionParams, webSocket, context) {
-        console.log("Connected");
+        console.log('Connected');
         return {
           pubsub: pubsub,
         };
       },
       onDisconnect(webSocket, context) {
-        console.log("Disconnected");
+        console.log('Disconnected');
       },
     },
     {
       server: httpServer,
-      path: "/graphql",
+      path: '/graphql',
     }
   );
   // Define Server Properties
   const server = new ApolloServer({
     cors: {
-      origin: "*",
+      origin: '*',
       credentials: true,
     },
     typeDefs: schema,
@@ -87,7 +91,7 @@
       };
     },
   });
-  app.enable("trust proxy");
+  app.enable('trust proxy');
   app.use(cors());
 
   app.use(express.json());
@@ -98,14 +102,21 @@
     })
   );
 
-  console.log((process.memoryUsage().rss / 1024 / 1024).toFixed(2) + " MB");
+  // Store cache in app.locals for route access
+  app.locals.cache = cache;
+
+  // Register hazards REST API routes
+  app.use('/api/hazards', hazardsRouter);
+
+  // Register alert history REST API routes
+  app.use('/api/alerts/history', alertHistoryRouter);
+
+  console.log((process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB');
 
   // Initially cache region data
   const cacheRegionDataResult = await cacheRegionData(cache);
   if (!cacheRegionDataResult.success) {
-    console.log(
-      `Failed caching initial region data: ${cacheRegionDataResult.message}`
-    );
+    console.log(`Failed caching initial region data: ${cacheRegionDataResult.message}`);
     return;
   }
 
@@ -114,16 +125,10 @@
   server.applyMiddleware({ app });
 
   httpServer.listen({ port: process.env.PORT }, async () => {
-    console.log(
-      `Server ready at ${process.env.SITE_URL}:${process.env.PORT}${server.graphqlPath}`
-    );
+    console.log(`Server ready at ${process.env.SITE_URL}:${process.env.PORT}${server.graphqlPath}`);
     setInterval(async () => {
-      console.log(
-        "--RAM Usage: " +
-          (process.memoryUsage().rss / 1024 / 1024).toFixed(2) +
-          " MB"
-      );
-      console.log("running cache job");
+      console.log('--RAM Usage: ' + (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB');
+      console.log('running cache job');
       await cacheRegionData(cache);
     }, 30000);
   });
