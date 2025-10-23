@@ -83,7 +83,23 @@ router.get('/optimized', async (req, res) => {
         if (snapshot.alert_data) {
           for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
             if (!deduplicatedAlerts[alertId]) {
-              deduplicatedAlerts[alertId] = alertData;
+              // Check if this is normalized structure (has locations/alertLocationMap)
+              if (snapshot.locations && snapshot.alertLocationMap && snapshot.alertLocationMap[alertId]) {
+                // Reconstruct locations array from normalized structure
+                const locationIds = snapshot.alertLocationMap[alertId];
+                const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc); // Filter out any missing locations
+
+                deduplicatedAlerts[alertId] = {
+                  ...alertData,
+                  locations: locations,
+                };
+              } else if (alertData.locations) {
+                // Old alert-centric format with embedded locations
+                deduplicatedAlerts[alertId] = alertData;
+              } else {
+                // Fallback: just the alert data without locations
+                deduplicatedAlerts[alertId] = alertData;
+              }
             }
           }
         }
@@ -218,7 +234,23 @@ router.get('/last', async (req, res) => {
           if (snapshot.alert_data) {
             for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
               if (!deduplicatedAlerts[alertId]) {
-                deduplicatedAlerts[alertId] = alertData;
+                // Check if this is normalized structure (has locations/alertLocationMap)
+                if (snapshot.locations && snapshot.alertLocationMap && snapshot.alertLocationMap[alertId]) {
+                  // Reconstruct locations array from normalized structure
+                  const locationIds = snapshot.alertLocationMap[alertId];
+                  const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc); // Filter out any missing locations
+
+                  deduplicatedAlerts[alertId] = {
+                    ...alertData,
+                    locations: locations,
+                  };
+                } else if (alertData.locations) {
+                  // Old alert-centric format with embedded locations
+                  deduplicatedAlerts[alertId] = alertData;
+                } else {
+                  // Fallback: just the alert data without locations
+                  deduplicatedAlerts[alertId] = alertData;
+                }
               }
             }
           }

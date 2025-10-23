@@ -31,6 +31,7 @@
   const hazardsRouter = require('./src/routes/hazards');
   const alertHistoryRouter = require('./src/routes/alertHistory');
   const alertHistoryOptimizedRouter = require('./src/routes/alertHistoryOptimized');
+  const apiDocsRouter = require('./src/routes/apiDocs');
 
   // Create executable schema
   const execSchema = makeExecutableSchema({
@@ -105,6 +106,9 @@
 
   // Store cache in app.locals for route access
   app.locals.cache = cache;
+
+  // Register API documentation route
+  app.use('/api/docs', apiDocsRouter);
 
   // Register hazards REST API routes
   app.use('/api/hazards', hazardsRouter);
