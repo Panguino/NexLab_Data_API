@@ -79,7 +79,7 @@ router.get('/optimized', async (req, res) => {
           events: [],
         };
 
-        // First, collect full alert data from alert_data section
+        // First, collect full alert data from alert_data section (new format)
         if (snapshot.alert_data) {
           for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
             if (!deduplicatedAlerts[alertId]) {
@@ -90,6 +90,15 @@ router.get('/optimized', async (req, res) => {
 
         // Then, track status changes in timeline
         for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
+          // For backward compatibility with old snapshots:
+          // If alert_data section doesn't exist and this alert has full data (not just id+status),
+          // add it to deduplicatedAlerts
+          if (!snapshot.alert_data && (alertData.status === 'new' || alertData.status === 'updated')) {
+            if (!deduplicatedAlerts[alertId]) {
+              deduplicatedAlerts[alertId] = alertData;
+            }
+          }
+
           timelineEntry.events.push({
             alertId,
             status: alertData.status,
@@ -205,7 +214,7 @@ router.get('/last', async (req, res) => {
             events: [],
           };
 
-          // First, collect full alert data from alert_data section
+          // First, collect full alert data from alert_data section (new format)
           if (snapshot.alert_data) {
             for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
               if (!deduplicatedAlerts[alertId]) {
@@ -216,6 +225,15 @@ router.get('/last', async (req, res) => {
 
           // Then, track status changes in timeline
           for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
+            // For backward compatibility with old snapshots:
+            // If alert_data section doesn't exist and this alert has full data (not just id+status),
+            // add it to deduplicatedAlerts
+            if (!snapshot.alert_data && (alertData.status === 'new' || alertData.status === 'updated')) {
+              if (!deduplicatedAlerts[alertId]) {
+                deduplicatedAlerts[alertId] = alertData;
+              }
+            }
+
             timelineEntry.events.push({
               alertId,
               status: alertData.status,
