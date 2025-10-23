@@ -30,6 +30,7 @@
   // Hazards Routes
   const hazardsRouter = require('./src/routes/hazards');
   const alertHistoryRouter = require('./src/routes/alertHistory');
+  const alertHistoryOptimizedRouter = require('./src/routes/alertHistoryOptimized');
 
   // Create executable schema
   const execSchema = makeExecutableSchema({
@@ -110,6 +111,9 @@
 
   // Register alert history REST API routes
   app.use('/api/alerts/history', alertHistoryRouter);
+
+  // Register optimized alert history REST API routes
+  app.use('/api/alerts/history', alertHistoryOptimizedRouter);
 
   console.log((process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB');
 
