@@ -79,27 +79,21 @@ router.get('/optimized', async (req, res) => {
           events: [],
         };
 
-        for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
-          // If full alert data (new or updated)
-          if (alertData.status === 'new' || alertData.status === 'updated') {
-            deduplicatedAlerts[alertId] = alertData;
-            timelineEntry.events.push({
-              alertId,
-              status: alertData.status,
-            });
-          } else if (alertData.status === 'unchanged') {
-            // Just track in timeline, don't duplicate data
-            timelineEntry.events.push({
-              alertId,
-              status: 'unchanged',
-            });
-          } else if (alertData.status === 'expired') {
-            // Track expiration
-            timelineEntry.events.push({
-              alertId,
-              status: 'expired',
-            });
+        // First, collect full alert data from alert_data section
+        if (snapshot.alert_data) {
+          for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
+            if (!deduplicatedAlerts[alertId]) {
+              deduplicatedAlerts[alertId] = alertData;
+            }
           }
+        }
+
+        // Then, track status changes in timeline
+        for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
+          timelineEntry.events.push({
+            alertId,
+            status: alertData.status,
+          });
         }
 
         if (timelineEntry.events.length > 0) {
@@ -211,24 +205,21 @@ router.get('/last', async (req, res) => {
             events: [],
           };
 
-          for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
-            if (alertData.status === 'new' || alertData.status === 'updated') {
-              deduplicatedAlerts[alertId] = alertData;
-              timelineEntry.events.push({
-                alertId,
-                status: alertData.status,
-              });
-            } else if (alertData.status === 'unchanged') {
-              timelineEntry.events.push({
-                alertId,
-                status: 'unchanged',
-              });
-            } else if (alertData.status === 'expired') {
-              timelineEntry.events.push({
-                alertId,
-                status: 'expired',
-              });
+          // First, collect full alert data from alert_data section
+          if (snapshot.alert_data) {
+            for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
+              if (!deduplicatedAlerts[alertId]) {
+                deduplicatedAlerts[alertId] = alertData;
+              }
             }
+          }
+
+          // Then, track status changes in timeline
+          for (const [alertId, alertData] of Object.entries(snapshot.alerts)) {
+            timelineEntry.events.push({
+              alertId,
+              status: alertData.status,
+            });
           }
 
           if (timelineEntry.events.length > 0) {
@@ -271,4 +262,3 @@ router.get('/last', async (req, res) => {
 });
 
 module.exports = router;
-

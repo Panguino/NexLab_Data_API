@@ -63,7 +63,7 @@ async function archiveAlertsToS3Optimized(cache) {
       ServerSideEncryption: 'AES256',
       Metadata: {
         'snapshot-id': snapshot.snapshot_id,
-        'timestamp': snapshot.timestamp,
+        timestamp: snapshot.timestamp,
         'alerts-count': String(snapshot.alerts_count),
         'new-count': String(snapshot.new_count),
         'unchanged-count': String(snapshot.unchanged_count),
@@ -206,7 +206,8 @@ function extractAllAlerts(regionData) {
 
 /**
  * Create optimized snapshot by comparing with previous snapshot
- * Only stores full data for new/updated alerts
+ * Stores full data for all alerts in alert_data section
+ * Stores status changes in alerts section for timeline tracking
  * @param {Object} currentAlerts - Current alerts map
  * @param {Object} previousAlerts - Previous alerts map
  * @returns {Object} Optimized snapshot
@@ -219,6 +220,9 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
     new_count: 0,
     unchanged_count: 0,
     expired_count: 0,
+    // Store full alert data for all current alerts
+    alert_data: {},
+    // Store status changes for timeline
     alerts: {},
   };
 
@@ -229,10 +233,13 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   for (const [alertId, alert] of Object.entries(currentAlerts)) {
     seenAlerts.add(alertId);
 
+    // Always store full alert data
+    snapshot.alert_data[alertId] = alert;
+
     if (!previousAlerts || !previousAlerts[alertId]) {
-      // New alert - store full data
+      // New alert
       snapshot.alerts[alertId] = {
-        ...alert,
+        id: alertId,
         status: 'new',
       };
       snapshot.new_count++;
@@ -242,14 +249,14 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
       const hasChanged = JSON.stringify(alert) !== JSON.stringify(prev);
 
       if (hasChanged) {
-        // Updated alert - store full data
+        // Updated alert
         snapshot.alerts[alertId] = {
-          ...alert,
+          id: alertId,
           status: 'updated',
         };
         snapshot.new_count++; // Count as new data
       } else {
-        // Unchanged alert - store only ID and status
+        // Unchanged alert
         snapshot.alerts[alertId] = {
           id: alertId,
           status: 'unchanged',
@@ -276,4 +283,3 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
 }
 
 module.exports = archiveAlertsToS3Optimized;
-
