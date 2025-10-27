@@ -334,6 +334,11 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   if (previousAlerts && previousAlerts.alerts) {
     for (const [alertId, alert] of Object.entries(previousAlerts.alerts)) {
       if (!seenAlerts.has(alertId)) {
+        // Store full data for expired alerts so they can be retrieved in historical queries
+        if (previousAlerts.alert_data && previousAlerts.alert_data[alertId]) {
+          snapshot.alert_data[alertId] = previousAlerts.alert_data[alertId];
+        }
+
         snapshot.alerts[alertId] = {
           id: alertId,
           status: 'expired',

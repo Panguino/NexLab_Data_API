@@ -1,0 +1,136 @@
+================================================================================
+COPY AND PASTE THIS TEXT TO AUGMENT CODE
+================================================================================
+
+Here's my NexLab Weather Alerts API for you to use:
+
+📚 API DOCUMENTATION ENDPOINT:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/docs
+
+This endpoint returns complete API schema with all endpoints, parameters, data structure, filtering options, and examples.
+
+---
+
+🌍 REAL-TIME HAZARDS DATA:
+
+Endpoint: GET /api/hazards
+Updated: Every 30 seconds
+Use for: Current active weather alerts and hazards
+
+Query Parameters:
+- region: CONUS, ALASKA, HAWAII
+- state: 2-letter state code (FL, CA, TX, etc.)
+- hazardType: TORNADO, SEVERE, FIRE, WINTER, MARINE, FLOOD, WIND, HEAT, COLD, FROST, FREEZE
+- hazardLevel: WARNING, WATCH, ADVISORY, STATEMENT
+
+Examples:
+- Get all hazards: /api/hazards
+- Get tornado warnings: /api/hazards?hazardType=TORNADO&hazardLevel=WARNING
+- Get Florida hazards: /api/hazards/state/FL
+- Get county hazards: /api/hazards/county/12086
+- Get region hazards: /api/hazards/region/CONUS
+
+---
+
+📊 HISTORICAL ALERTS DATA:
+
+Endpoints:
+1. GET /api/alerts/history/optimized?date=YYYY-MM-DD
+   - Get deduplicated alerts for specific date with timeline
+   - Parameters: date (required), region (optional)
+   - Example: /api/alerts/history/optimized?date=2025-10-23
+
+2. GET /api/alerts/history/last?hours=N
+   - Get alerts from last N hours (max 720 hours = 30 days)
+   - Parameters: hours (optional, default 24), region (optional)
+   - Examples: /api/alerts/history/last?hours=24 or /api/alerts/history/last?hours=168
+
+Storage: Amazon S3 with 28-day retention
+Use for: Historical alert data and timeline tracking
+
+---
+
+📋 ALERT DATA STRUCTURE:
+
+Each alert contains:
+- id: Unique alert identifier
+- event: Type of weather event (e.g., "Tornado Warning")
+- headline: Short headline
+- description: Detailed description
+- severity: Extreme, Severe, Moderate, Minor
+- urgency: Immediate, Expected, Future, Past
+- certainty: Observed, Likely, Possible
+- areaDesc: Description of affected area
+- sent, effective, onset, expires, ends: ISO 8601 UTC timestamps
+- locations: Array of affected locations with:
+  - id: composite key (county-FIPS, coast-ID, offshore-ID)
+  - locationId: FIPS code or location ID
+  - name: location name
+  - type: county, coast, or offshore
+  - state: state code (if applicable)
+  - lat, lon: coordinates
+
+---
+
+🎯 AVAILABLE FILTERS:
+
+Regions: CONUS, ALASKA, HAWAII
+
+States: All 50 US states (AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD, MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VT, VA, WA, WV, WI, WY)
+
+Hazard Types: TORNADO, SEVERE, FIRE, WINTER, MARINE, FLOOD, WIND, HEAT, COLD, FROST, FREEZE
+
+Hazard Levels: WARNING, WATCH, ADVISORY, STATEMENT
+
+---
+
+⚙️ IMPORTANT NOTES:
+
+✓ All timestamps are in UTC (ISO 8601 format)
+✓ Real-time data (/api/hazards) updated every 30 seconds
+✓ Historical data (/api/alerts/history/*) stored in S3 with 28-day retention
+✓ Each alert can affect multiple locations (counties, coasts, offshores)
+✓ Locations stored separately from alerts (normalized database structure)
+✓ API is backward compatible with old snapshot formats
+✓ Maximum 720 hours (30 days) for historical queries
+✓ Region filtering is optional but recommended for performance
+
+---
+
+🔗 BASE URL:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com
+
+---
+
+💡 QUICK EXAMPLES:
+
+Get all current tornado warnings:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/hazards?hazardType=TORNADO&hazardLevel=WARNING
+
+Get all marine warnings in CONUS:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/hazards?region=CONUS&hazardType=MARINE&hazardLevel=WARNING
+
+Get all hazards in Florida:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/hazards/state/FL
+
+Get all hazards for Miami-Dade County (FIPS: 12086):
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/hazards/county/12086
+
+Get all alerts from last 24 hours:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/alerts/history/last?hours=24
+
+Get all alerts from last 7 days:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/alerts/history/last?hours=168
+
+Get all alerts for specific date:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/alerts/history/optimized?date=2025-10-23
+
+---
+
+📚 COMPLETE DOCUMENTATION:
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/docs
+
+This endpoint returns the complete API schema in JSON format with all endpoints, parameters, examples, and detailed information.
+
+================================================================================
+

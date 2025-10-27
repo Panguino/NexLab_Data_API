@@ -1,0 +1,179 @@
+================================================================================
+NEXLAB WEATHER ALERTS API - QUICK REFERENCE FOR AUGMENT CODE
+================================================================================
+
+📚 DOCUMENTATION ENDPOINT
+────────────────────────────────────────────────────────────────────────────────
+GET https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/docs
+
+Returns complete API schema with all endpoints, parameters, and examples.
+
+
+🌍 REAL-TIME HAZARDS ENDPOINTS
+────────────────────────────────────────────────────────────────────────────────
+
+1. GET /api/hazards
+   Get all active hazards with optional filters
+   
+   Query Parameters:
+   - region: CONUS, ALASKA, HAWAII
+   - state: 2-letter state code (FL, CA, TX, etc.)
+   - hazardType: TORNADO, SEVERE, FIRE, WINTER, MARINE, FLOOD, WIND, HEAT, COLD, FROST, FREEZE
+   - hazardLevel: WARNING, WATCH, ADVISORY, STATEMENT
+   
+   Examples:
+   /api/hazards
+   /api/hazards?region=CONUS&hazardType=TORNADO
+   /api/hazards?state=FL&hazardLevel=WARNING
+
+2. GET /api/hazards/county/:fips
+   Get hazards for specific county by FIPS code
+   
+   Example:
+   /api/hazards/county/12086
+
+3. GET /api/hazards/state/:state
+   Get hazards for specific state
+   
+   Example:
+   /api/hazards/state/FL
+
+4. GET /api/hazards/region/:region
+   Get hazards for specific region
+   
+   Example:
+   /api/hazards/region/CONUS
+
+
+📊 HISTORICAL ALERTS ENDPOINTS
+────────────────────────────────────────────────────────────────────────────────
+
+1. GET /api/alerts/history/optimized?date=YYYY-MM-DD
+   Get deduplicated alerts for specific date with timeline
+   
+   Query Parameters:
+   - date (required): YYYY-MM-DD format
+   - region (optional): CONUS, ALASKA, HAWAII
+   
+   Examples:
+   /api/alerts/history/optimized?date=2025-10-23
+   /api/alerts/history/optimized?date=2025-10-23&region=CONUS
+
+2. GET /api/alerts/history/last?hours=N
+   Get alerts from last N hours (max 720 hours = 30 days)
+   
+   Query Parameters:
+   - hours (optional): 1-720, default 24
+   - region (optional): CONUS, ALASKA, HAWAII
+   
+   Examples:
+   /api/alerts/history/last?hours=24
+   /api/alerts/history/last?hours=168
+   /api/alerts/history/last?hours=24&region=CONUS
+
+
+🎯 FILTERING OPTIONS
+────────────────────────────────────────────────────────────────────────────────
+
+Regions:
+  CONUS, ALASKA, HAWAII
+
+States (all 50 US states):
+  AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD,
+  MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC,
+  SD, TN, TX, UT, VT, VA, WA, WV, WI, WY
+
+Hazard Types:
+  TORNADO, SEVERE, FIRE, WINTER, MARINE, FLOOD, WIND, HEAT, COLD, FROST, FREEZE
+
+Hazard Levels:
+  WARNING, WATCH, ADVISORY, STATEMENT
+
+
+📋 ALERT DATA FIELDS
+────────────────────────────────────────────────────────────────────────────────
+
+id                - Unique alert identifier
+event             - Type of weather event (e.g., "Tornado Warning")
+headline          - Short headline
+description       - Detailed description
+severity          - Extreme, Severe, Moderate, Minor
+urgency           - Immediate, Expected, Future, Past
+certainty         - Observed, Likely, Possible
+areaDesc          - Description of affected area
+sent              - When alert was sent (ISO 8601 UTC)
+effective         - When alert becomes effective (ISO 8601 UTC)
+onset             - When weather event begins (ISO 8601 UTC)
+expires           - When alert expires (ISO 8601 UTC)
+ends              - When weather event ends (ISO 8601 UTC)
+locations         - Array of affected locations with:
+                    - id: composite key (county-FIPS, coast-ID, offshore-ID)
+                    - locationId: FIPS code or location ID
+                    - name: location name
+                    - type: county, coast, or offshore
+                    - state: state code (if applicable)
+                    - lat: latitude
+                    - lon: longitude
+
+
+💡 COMMON QUERIES
+────────────────────────────────────────────────────────────────────────────────
+
+Get all current tornado warnings:
+  /api/hazards?hazardType=TORNADO&hazardLevel=WARNING
+
+Get all marine warnings in CONUS:
+  /api/hazards?region=CONUS&hazardType=MARINE&hazardLevel=WARNING
+
+Get all hazards in Florida:
+  /api/hazards/state/FL
+
+Get all hazards for Miami-Dade County:
+  /api/hazards/county/12086
+
+Get all alerts from last 24 hours:
+  /api/alerts/history/last?hours=24
+
+Get all alerts from last 7 days:
+  /api/alerts/history/last?hours=168
+
+Get all alerts for specific date:
+  /api/alerts/history/optimized?date=2025-10-23
+
+Get all alerts for specific date in CONUS:
+  /api/alerts/history/optimized?date=2025-10-23&region=CONUS
+
+
+⚙️ IMPORTANT NOTES
+────────────────────────────────────────────────────────────────────────────────
+
+✓ All timestamps are in UTC (ISO 8601 format)
+✓ Real-time data (/api/hazards) updated every 30 seconds
+✓ Historical data (/api/alerts/history/*) stored in S3 with 28-day retention
+✓ Each alert can affect multiple locations
+✓ Locations stored separately from alerts (normalized database structure)
+✓ API is backward compatible with old snapshot formats
+✓ Maximum 720 hours (30 days) for historical queries
+✓ Region filtering is optional but recommended for performance
+
+
+📍 BASE URL
+────────────────────────────────────────────────────────────────────────────────
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com
+
+
+🔗 FULL DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────────
+https://api-data-nexlab-staging-1108a5c77b75.herokuapp.com/api/docs
+
+This endpoint returns complete API schema in JSON format including:
+- All 7 endpoints with descriptions
+- Query parameters for each endpoint
+- Alert data structure (15+ fields)
+- All filtering options
+- Usage examples
+- Important notes for AI agents
+
+
+================================================================================
+
