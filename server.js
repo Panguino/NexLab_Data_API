@@ -27,6 +27,9 @@
   // Cache Weather Function
   const cacheRegionData = require('./src/util/jobs/cacheRegionData');
 
+  // Schedule setup for archiving jobs
+  const { setup: setupSchedule } = require('./schedule');
+
   // Hazards Routes
   const hazardsRouter = require('./src/routes/hazards');
   const alertHistoryRouter = require('./src/routes/alertHistory');
@@ -134,6 +137,10 @@
 
   httpServer.listen({ port: process.env.PORT }, async () => {
     console.log(`Server ready at ${process.env.SITE_URL}:${process.env.PORT}${server.graphqlPath}`);
+
+    // Setup scheduled jobs (archiving, etc.)
+    setupSchedule(cache);
+
     setInterval(async () => {
       console.log('--RAM Usage: ' + (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + ' MB');
       console.log('running cache job');
