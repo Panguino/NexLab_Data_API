@@ -64,26 +64,19 @@ async function archiveAlertsToS3Optimized(cache) {
       Metadata: {
         'snapshot-id': snapshot.snapshot_id,
         timestamp: snapshot.timestamp,
-        'alerts-count': String(snapshot.alerts_count),
-        'new-count': String(snapshot.new_count),
-        'unchanged-count': String(snapshot.unchanged_count),
-        'expired-count': String(snapshot.expired_count),
+        'new-alerts-count': String(snapshot.new_alerts_count),
       },
     };
 
     await s3.putObject(params).promise();
 
-    console.log(`✅ Archived ${snapshot.alerts_count} alerts to S3 (optimized)`);
-    console.log(`   New: ${snapshot.new_count}, Unchanged: ${snapshot.unchanged_count}, Expired: ${snapshot.expired_count}`);
+    console.log(`✅ Archived ${snapshot.new_alerts_count} new/updated alerts to S3 (incremental)`);
 
     return {
       success: true,
-      message: 'Alerts archived to S3 (optimized)',
+      message: 'Alerts archived to S3 (incremental)',
       s3Key,
-      alertsCount: snapshot.alerts_count,
-      newCount: snapshot.new_count,
-      unchangedCount: snapshot.unchanged_count,
-      expiredCount: snapshot.expired_count,
+      newAlertsCount: snapshot.new_alerts_count,
       timestamp: snapshot.timestamp,
     };
   } catch (error) {
@@ -271,42 +264,36 @@ function extractAllAlerts(regionData) {
 }
 
 /**
- * Create optimized snapshot by comparing with previous snapshot
- * Uses normalized database structure with separate locations, alerts, and mappings
+ * Create incremental snapshot by comparing with previous snapshot
+ * Only stores NEW and UPDATED alerts (not unchanged or expired)
+ * This creates an incremental archive where each snapshot only contains new data
  * @param {Object} currentAlerts - Current alerts object { locations, alerts, alertLocationMap }
  * @param {Object} previousAlerts - Previous alerts object
- * @returns {Object} Optimized snapshot
+ * @returns {Object} Incremental snapshot
  */
 function createOptimizedSnapshot(currentAlerts, previousAlerts) {
   const snapshot = {
     timestamp: new Date().toISOString(),
     snapshot_id: uuidv4(),
-    alerts_count: Object.keys(currentAlerts.alerts).length,
-    new_count: 0,
-    unchanged_count: 0,
-    expired_count: 0,
-    // Normalized database structure
-    locations: currentAlerts.locations,
-    alert_data: currentAlerts.alerts,
-    alertLocationMap: currentAlerts.alertLocationMap,
-    // Store status changes for timeline
+    new_alerts_count: 0,
+    // Normalized database structure - only for new/updated alerts
+    locations: {},
+    alert_data: {},
+    alertLocationMap: {},
+    // Store new/updated alerts
     alerts: {},
   };
 
-  // Track which alerts we've seen
-  const seenAlerts = new Set();
+  // Track which alerts are new or updated
+  const newOrUpdatedAlerts = new Set();
 
-  // Process current alerts
+  // Process current alerts - only store if new or updated
   for (const [alertId, alert] of Object.entries(currentAlerts.alerts)) {
-    seenAlerts.add(alertId);
+    let isNew = false;
 
     if (!previousAlerts || !previousAlerts.alerts || !previousAlerts.alerts[alertId]) {
       // New alert
-      snapshot.alerts[alertId] = {
-        id: alertId,
-        status: 'new',
-      };
-      snapshot.new_count++;
+      isNew = true;
     } else {
       // Check if alert has changed
       const prev = previousAlerts.alerts[alertId];
@@ -314,36 +301,31 @@ function createOptimizedSnapshot(currentAlerts, previousAlerts) {
 
       if (hasChanged) {
         // Updated alert
-        snapshot.alerts[alertId] = {
-          id: alertId,
-          status: 'updated',
-        };
-        snapshot.new_count++; // Count as new data
-      } else {
-        // Unchanged alert
-        snapshot.alerts[alertId] = {
-          id: alertId,
-          status: 'unchanged',
-        };
-        snapshot.unchanged_count++;
+        isNew = true;
       }
     }
-  }
 
-  // Process expired alerts (were in previous but not in current)
-  if (previousAlerts && previousAlerts.alerts) {
-    for (const [alertId, alert] of Object.entries(previousAlerts.alerts)) {
-      if (!seenAlerts.has(alertId)) {
-        // Store full data for expired alerts so they can be retrieved in historical queries
-        if (previousAlerts.alert_data && previousAlerts.alert_data[alertId]) {
-          snapshot.alert_data[alertId] = previousAlerts.alert_data[alertId];
+    // Only store new or updated alerts
+    if (isNew) {
+      newOrUpdatedAlerts.add(alertId);
+      snapshot.alerts[alertId] = {
+        id: alertId,
+      };
+      snapshot.new_alerts_count++;
+
+      // Store full alert data
+      snapshot.alert_data[alertId] = alert;
+
+      // Store locations and mappings for this alert
+      if (currentAlerts.alertLocationMap[alertId]) {
+        snapshot.alertLocationMap[alertId] = currentAlerts.alertLocationMap[alertId];
+
+        // Store location data for all locations this alert is assigned to
+        for (const locationId of currentAlerts.alertLocationMap[alertId]) {
+          if (currentAlerts.locations[locationId]) {
+            snapshot.locations[locationId] = currentAlerts.locations[locationId];
+          }
         }
-
-        snapshot.alerts[alertId] = {
-          id: alertId,
-          status: 'expired',
-        };
-        snapshot.expired_count++;
       }
     }
   }

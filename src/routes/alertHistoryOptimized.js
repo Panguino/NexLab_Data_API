@@ -79,7 +79,8 @@ router.get('/optimized', async (req, res) => {
           events: [],
         };
 
-        // First, collect full alert data from alert_data section (new format)
+        // Collect full alert data from alert_data section
+        // With incremental snapshots, all alerts in alert_data are new/updated
         if (snapshot.alert_data) {
           for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
             if (!deduplicatedAlerts[alertId]) {
@@ -87,7 +88,7 @@ router.get('/optimized', async (req, res) => {
               if (snapshot.locations && snapshot.alertLocationMap && snapshot.alertLocationMap[alertId]) {
                 // Reconstruct locations array from normalized structure
                 const locationIds = snapshot.alertLocationMap[alertId];
-                const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc); // Filter out any missing locations
+                const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc);
 
                 deduplicatedAlerts[alertId] = {
                   ...alertData,
@@ -99,25 +100,6 @@ router.get('/optimized', async (req, res) => {
               } else {
                 // Fallback: just the alert data without locations
                 deduplicatedAlerts[alertId] = alertData;
-              }
-            }
-          }
-        }
-
-        // Also process expired alerts that may not be in alert_data (for old snapshots or backward compatibility)
-        if (snapshot.alerts) {
-          for (const [alertId, alertStatus] of Object.entries(snapshot.alerts)) {
-            if (alertStatus.status === 'expired' && !deduplicatedAlerts[alertId]) {
-              // Try to get full data from alert_data
-              if (snapshot.alert_data && snapshot.alert_data[alertId]) {
-                const locationIds = snapshot.alertLocationMap && snapshot.alertLocationMap[alertId] ? snapshot.alertLocationMap[alertId] : [];
-                const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc);
-
-                deduplicatedAlerts[alertId] = {
-                  ...snapshot.alert_data[alertId],
-                  locations: locations,
-                  status: 'expired',
-                };
               }
             }
           }
@@ -249,7 +231,8 @@ router.get('/last', async (req, res) => {
             events: [],
           };
 
-          // First, collect full alert data from alert_data section (new format)
+          // Collect full alert data from alert_data section
+          // With incremental snapshots, all alerts in alert_data are new/updated
           if (snapshot.alert_data) {
             for (const [alertId, alertData] of Object.entries(snapshot.alert_data)) {
               if (!deduplicatedAlerts[alertId]) {
@@ -257,7 +240,7 @@ router.get('/last', async (req, res) => {
                 if (snapshot.locations && snapshot.alertLocationMap && snapshot.alertLocationMap[alertId]) {
                   // Reconstruct locations array from normalized structure
                   const locationIds = snapshot.alertLocationMap[alertId];
-                  const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc); // Filter out any missing locations
+                  const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc);
 
                   deduplicatedAlerts[alertId] = {
                     ...alertData,
@@ -269,25 +252,6 @@ router.get('/last', async (req, res) => {
                 } else {
                   // Fallback: just the alert data without locations
                   deduplicatedAlerts[alertId] = alertData;
-                }
-              }
-            }
-          }
-
-          // Also process expired alerts that may not be in alert_data (for old snapshots or backward compatibility)
-          if (snapshot.alerts) {
-            for (const [alertId, alertStatus] of Object.entries(snapshot.alerts)) {
-              if (alertStatus.status === 'expired' && !deduplicatedAlerts[alertId]) {
-                // Try to get full data from alert_data
-                if (snapshot.alert_data && snapshot.alert_data[alertId]) {
-                  const locationIds = snapshot.alertLocationMap && snapshot.alertLocationMap[alertId] ? snapshot.alertLocationMap[alertId] : [];
-                  const locations = locationIds.map((locId) => snapshot.locations[locId]).filter((loc) => loc);
-
-                  deduplicatedAlerts[alertId] = {
-                    ...snapshot.alert_data[alertId],
-                    locations: locations,
-                    status: 'expired',
-                  };
                 }
               }
             }
