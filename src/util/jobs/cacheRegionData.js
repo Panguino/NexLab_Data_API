@@ -342,7 +342,7 @@ async function cacheRegionData(cache) {
         }
         const simplifiedPolygon = simplify(
           polygon(feature.geometry.coordinates),
-          { tolerance, highQuality: true }
+          { tolerance, highQuality: true },
         );
         return { ...simplifiedPolygon, properties: feature.properties };
       } else if (feature.geometry?.type === "MultiPolygon") {
@@ -350,7 +350,7 @@ async function cacheRegionData(cache) {
         if (kinks(multiPolygonShape).features.length > 0) {
           if (debug) {
             console.warn(
-              "Invalid multipolygon detected, skipping simplification"
+              "Invalid multipolygon detected, skipping simplification",
             );
           }
           return feature;
@@ -373,10 +373,10 @@ async function cacheRegionData(cache) {
   let canadaData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/canada.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/canada.json",
     );
     canadaData = simplifyGeoJson(
-      feature(response.data, response.data.objects.collection)
+      feature(response.data, response.data.objects.collection),
     );
   } catch (error) {
     return cachingResult(false, error);
@@ -387,7 +387,7 @@ async function cacheRegionData(cache) {
     const provinceWithName = province;
     provinceWithName.properties.ALPHA_CODE = province.properties.NAME;
     provinceWithName.properties.NAME = getProvinceNameByAlphaCode(
-      province.properties.NAME
+      province.properties.NAME,
     );
     REGIONS["CANADA"].states[provinceWithName.properties.ALPHA_CODE] = {
       ...provinceWithName,
@@ -399,10 +399,10 @@ async function cacheRegionData(cache) {
   let mexicoAndOthersData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/mexi-cuba.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/mexi-cuba.json",
     );
     mexicoAndOthersData = simplifyGeoJson(
-      feature(response.data, response.data.objects.collection)
+      feature(response.data, response.data.objects.collection),
     );
   } catch (error) {
     return cachingResult(false, error);
@@ -468,10 +468,10 @@ async function cacheRegionData(cache) {
   let stateData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/us-states-nws.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/us-states-nws.json",
     );
     stateData = simplifyGeoJson(
-      feature(response.data, response.data.objects.states)
+      feature(response.data, response.data.objects.states),
     );
   } catch (error) {
     return cachingResult(false, error);
@@ -479,9 +479,11 @@ async function cacheRegionData(cache) {
 
   // Assign states to regions
   for (let state of stateData.features) {
-    if (state.properties.STATE in getRegionByState(state.properties.STATE).states){
-        console.log(`Duplicate state found: ${state.properties.STATE}`)
-        continue
+    if (
+      state.properties.STATE in getRegionByState(state.properties.STATE).states
+    ) {
+      console.log(`Duplicate state found: ${state.properties.STATE}`);
+      continue;
     }
     getRegionByState(state.properties.STATE).states[state.properties.STATE] = {
       ...state,
@@ -493,10 +495,10 @@ async function cacheRegionData(cache) {
   let countyData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/us-counties-nws.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/us-counties-nws.json",
     );
     countyData = simplifyGeoJson(
-      feature(response.data, response.data.objects.counties)
+      feature(response.data, response.data.objects.counties),
     );
   } catch (error) {
     return cachingResult(false, error);
@@ -518,7 +520,7 @@ async function cacheRegionData(cache) {
   let coastData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/coastal.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/coastal.json",
     );
     coastData = simplifyGeoJson(response.data);
   } catch (error) {
@@ -529,7 +531,7 @@ async function cacheRegionData(cache) {
   for (let coast of coastData.features) {
     const region = getRegionByCoastOrOffshore(
       coast.properties.LAT,
-      coast.properties.LON
+      coast.properties.LON,
     );
     if (!region) {
       //console.log('No region found for coast:', coast.properties.ID, coast.properties.NAME)
@@ -553,7 +555,7 @@ async function cacheRegionData(cache) {
   let offshoreData = null;
   try {
     const response = await axios.get(
-      "https://weather.cod.edu/text/exper/assets/json/old/offshore.json"
+      "https://weather.cod.edu/text/exper/assets/json/old/offshore.json",
     );
     offshoreData = simplifyGeoJson(response.data);
   } catch (error) {
@@ -564,7 +566,7 @@ async function cacheRegionData(cache) {
   for (let offshore of offshoreData.features) {
     const region = getRegionByCoastOrOffshore(
       offshore.properties.LAT,
-      offshore.properties.LON
+      offshore.properties.LON,
     );
     if (!region) {
       //console.log('No region found for offshore:', offshore.properties.ID, offshore.properties.Name)
@@ -588,7 +590,7 @@ async function cacheRegionData(cache) {
   let hazardData = null;
   try {
     const response = await axios.get(
-      "https://climate.cod.edu/data/text/alerts.json"
+      "https://weather.cod.edu/wxdata/text/alerts.json",
     );
     hazardData = response.data;
   } catch (error) {
@@ -607,10 +609,10 @@ async function cacheRegionData(cache) {
   for (let [currentRegionKey, currentRegion] of Object.entries(REGIONS)) {
     // Assign to counties
     for (let [currentStateKey, currentState] of Object.entries(
-      currentRegion.states
+      currentRegion.states,
     )) {
       for (let [currentCountyKey, currentCounty] of Object.entries(
-        currentState.counties
+        currentState.counties,
       )) {
         for (let currentHazard of hazardData.features) {
           if ("SAME" in currentHazard.properties.geocode === false) {
@@ -627,7 +629,7 @@ async function cacheRegionData(cache) {
     }
     // Assign to coasts
     for (let [currentCoastKey, currentCoast] of Object.entries(
-      currentRegion.coasts
+      currentRegion.coasts,
     )) {
       for (let currentHazard of hazardData.features) {
         if ("UGC" in currentHazard.properties.geocode === false) {
@@ -642,7 +644,7 @@ async function cacheRegionData(cache) {
     }
     // Assign to offshores
     for (let [currentOffshoreKey, currentOffshore] of Object.entries(
-      currentRegion.offshores
+      currentRegion.offshores,
     )) {
       for (let currentHazard of hazardData.features) {
         if ("UGC" in currentHazard.properties.geocode === false) {
